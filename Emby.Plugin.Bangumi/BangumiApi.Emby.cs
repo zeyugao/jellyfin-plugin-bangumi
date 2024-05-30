@@ -55,10 +55,12 @@ public partial class BangumiApi
         var options = new HttpRequestOptions
         {
             Url = url,
-            RequestHeaders = {
-                { "Authorization", "Bearer " + (accessToken ?? "") }
-            }
         };
+
+        if (accessToken != null)
+        {
+            options.RequestHeaders.Add("Authorization", "Bearer " + accessToken);
+        }
         token.ThrowIfCancellationRequested();
         var jsonString = await SendRequest("GET", options);
         return JsonSerializer.Deserialize<T>(jsonString, Options);
