@@ -59,6 +59,7 @@ public partial class BangumiApi
                 { "Authorization", "Bearer " + (accessToken ?? "") }
             }
         };
+        token.ThrowIfCancellationRequested();
         var jsonString = await SendRequest("GET", options);
         return JsonSerializer.Deserialize<T>(jsonString, Options);
     }
