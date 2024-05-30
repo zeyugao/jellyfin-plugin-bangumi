@@ -5,6 +5,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using Jellyfin.Plugin.Bangumi.OAuth;
 using MediaBrowser.Common.Net;
 using HttpRequestOptions = MediaBrowser.Common.Net.HttpRequestOptions;
 
@@ -18,10 +19,12 @@ public partial class BangumiApi
     };
 
     private readonly IHttpClient _httpClient;
+    private readonly OAuthStore _store;
 
-    public BangumiApi(IHttpClient httpClient)
+    public BangumiApi(IHttpClient httpClient, OAuthStore store)
     {
         _httpClient = httpClient;
+        _store = store;
     }
 
     private static Plugin Plugin => Plugin.Instance!;
@@ -44,8 +47,7 @@ public partial class BangumiApi
 
     private async Task<T?> SendRequest<T>(string url, CancellationToken token)
     {
-        var jsonString = await SendRequest("GET", new HttpRequestOptions { Url = url });
-        return JsonSerializer.Deserialize<T>(jsonString, Options);
+        return await SendRequest<T>(url, _store.GetAvailable()?.AccessToken, token);
     }
 
     private async Task<T?> SendRequest<T>(string url, string? accessToken, CancellationToken token)
@@ -54,7 +56,7 @@ public partial class BangumiApi
         {
             Url = url,
             RequestHeaders = {
-                { "Authorization", "Bearer " + accessToken }
+                { "Authorization", "Bearer " + (accessToken ?? "") }
             }
         };
         var jsonString = await SendRequest("GET", options);
